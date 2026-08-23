@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Университет будущего | Инновации и Технологии</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Three.js CDN для 3D графики -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Яндекс SDK для авторизации -->
+  <script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk.js"></script>
+</head>
+<body>
+  <!-- Фоновый 3D Canvas -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Навигация -->
+  <header class="header">
+    <div class="logo">UNI<span>VERSE</span></div>
+    <nav class="nav">
+      <a href="#about">О нас</a>
+      <a href="#programs">Программы</a>
+      <a href="#innovations">3D Лаборатория</a>
+    </nav>
+    <button class="btn-primary" id="open-modal-btn">Подать заявку</button>
+  </header>
+
+  <!-- Главный экран (Hero) -->
+  <main class="hero">
+    <div class="hero-content">
+      <span class="badge">Приемная кампания 2026</span>
+      <h1 class="hero-title">Создавай будущее вместе с нами</h1>
+      <p class="hero-subtitle">Высокотехнологичное образование, передовые исследования и цифровая среда мирового уровня.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="openApplyModal()">Заполнить анкету</button>
+        <a href="#programs" class="btn-secondary">Узнать больше ↓</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Модальное окно: Сбор заявок & Авторизация Яндекс -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeApplyModal()">&times;</button>
+      <h2>Подача заявки на поступление</h2>
+      <p class="modal-desc">Войдите через Яндекс ID для автозаполнения или заполните форму вручную.</p>
+
+      <!-- Кнопка Яндекс OAuth -->
+      <div class="yandex-auth-block">
+        <button class="btn-yandex" id="yandex-auth-btn" type="button">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M2.5 12c0-5.247 4.253-9.5 9.5-9.5s9.5 4.253 9.5 9.5-4.253 9.5-9.5 9.5-9.5-4.253-9.5-9.5zm9.5-7.5C7.305 4.5 3.5 8.305 3.5 12s3.805 7.5 7.5 7.5 7.5-3.805 7.5-7.5-3.805-7.5-7.5-7.5zm1.2 3.6h1.7l-2.4 4.3 2.6 4.7h-1.8l-1.8-3.3-1 1.2v2.1H8.9V8.1h1.6v4.6l2.7-4.6z"/>
+          </svg>
+          Войти с Яндекс ID
+        </button>
+      </div>
+
+      <div class="divider"><span>или заполните вручную</span></div>
+
+      <!-- Форма сбора заявок -->
+      <form id="apply-form">
+        <div class="form-group">
+          <label for="first-name">Имя *</label>
+          <input type="text" id="first-name" name="firstName" placeholder="Иван" required>
+        </div>
+
+        <div class="form-group">
+          <label for="last-name">Фамилия *</label>
+          <input type="text" id="last-name" name="lastName" placeholder="Иванов" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Электронная почта *</label>
+          <input type="email" id="email" name="email" placeholder="ivanov@yandex.ru" required>
+        </div>
+
+        <button type="submit" class="btn-submit">Отправить заявку</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

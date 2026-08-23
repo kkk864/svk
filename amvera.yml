@@ -1,0 +1,7 @@
+meta:
+  environment: static
+  toolchain:
+    name: nginx
+
+run:
+  staticDir: .
