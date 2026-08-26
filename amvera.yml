@@ -5,9 +5,9 @@ meta:
     version: "20"
 
 build:
-  additionalCommands: npm install sqlite3 --build-from-source
+  additionalCommands: npm rebuild sqlite3 --build-from-source
 
 run:
-  scriptName: start
+  command: npm run start
   persistenceMount: /data
   containerPort: 3000
