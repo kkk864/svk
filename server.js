@@ -102,7 +102,7 @@ app.use(session({
 app.use(express.json({ limit: '10kb' }));
 
 //Разрешаем серверу отдавать статичные файлы (html, css, картинки) из папки public
-app.use(express.static('public/ready-html'));
+app.use(express.static('ready-html'));
 
 //Если запрос к API пришёл раньше, чем база данных успела инициализироваться, то отвечаем ошибкой
 app.use((req, res, next) => {
