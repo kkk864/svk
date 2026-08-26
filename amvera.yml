@@ -1,7 +1,13 @@
 meta:
-  environment: static
+  environment: node.js
   toolchain:
-    name: nginx
+    name: npm
+    version: "20"
+
+build:
+  additionalCommands: npm install sqlite3 --build-from-source
 
 run:
-  staticDir: .
+  scriptName: start
+  persistenceMount: /data
+  containerPort: 3000
