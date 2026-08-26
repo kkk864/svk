@@ -1,10 +1,15 @@
 //Подключаем библиотеку dotenv и вызываем функцию, которая читает файл .env и загружает переменные
 require('dotenv').config();
 
+
+
 //Подключаем библиотеку express
 const express = require('express');
 //Подключаем библиотеку для работы с сессиями
 const session = require('express-session');
+//Подключаем connect-sqlite3 — хранилище сессий на основе SQLite, 
+//чтобы не использовать стандартный MemoryStore, который не подходит для продакшена
+const SQLiteStore = require('connect-sqlite3')(session);
 //Подключаем встроенный модуль crypto, он нужен для генерации случайного state, чтобы защититься от CSRF в OAuth
 const crypto = require('crypto');
 //Создаём приложение
@@ -83,11 +88,11 @@ if (process.env.COOKIE_SECURE === 'true') {
 }
 
 app.use(session({
+  store: new SQLiteStore({ db: 'sessions.db', dir: './' }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    //Если COOKIE_SECURE=true, то куки ставятся только по HTTPS. Локально по HTTP оставляем false
     secure: process.env.COOKIE_SECURE === 'true',
     sameSite: 'lax',
   },
