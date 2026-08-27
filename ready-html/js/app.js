@@ -5,10 +5,6 @@ if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
 	}
 }
 
-const YANDEX_CLIENT_ID = ''
-const YANDEX_AUTH_KEY = 'yandexAuthenticated'
-const YANDEX_PENDING_KEY = 'yandexAuthPending'
-
 const form = document.getElementById('requestForm')
 const reviewInput = document.getElementById('review')
 const reviewError = document.getElementById('reviewError')
@@ -18,26 +14,31 @@ const yandexLogoutBtn = document.getElementById('yandexLogoutBtn')
 const submitBtn = document.getElementById('submitBtn')
 const authHint = document.getElementById('authHint')
 
-function getReturnUrl() {
-	return window.location.origin + window.location.pathname
-}
-
+//Обновляет ScrollTrigger, если он подключён на странице
 function refreshScrollTrigger() {
 	if (typeof ScrollTrigger !== 'undefined') {
 		ScrollTrigger.refresh()
 	}
 }
 
+//Проверяет, открыт ли сайт в Яндекс Браузере
+function isYandexBrowser() {
+	return /YaBrowser|YaSearchBrowser/i.test(navigator.userAgent)
+}
+
+//Настраивает горизонтальную прокрутку ленты с фотографиями
 function initHorizontalPhotoStrip() {
 	const section = document.querySelector('.photo-strip')
 	const track = document.querySelector('.photo-strip__track')
 	const first = track?.querySelector('.photo-strip__cluster--first')
 	const rest = track?.querySelector('.photo-strip__rest')
 
+	//Если хотя бы одного нужного элемента нет на странице, то дальше настраивать нечего
 	if (!section || !track || !first || !rest) {
 		return
 	}
 
+	//Если экран узкий, то горизонтальную ленту не запускаем
 	if (window.matchMedia('(max-width: 980px)').matches) {
 		return
 	}
@@ -85,204 +86,92 @@ function initHorizontalPhotoStrip() {
 	}, 0)
 }
 
-function storageGet(key) {
-	try {
-		return sessionStorage.getItem(key)
-	} catch (error) {
-		return null
-	}
-}
-
-function storageSet(key, value) {
-	try {
-		sessionStorage.setItem(key, value)
-	} catch (error) {}
-}
-
-function storageRemove(key) {
-	try {
-		sessionStorage.removeItem(key)
-	} catch (error) {}
-}
-
-function isYandexBrowser() {
-	return /YaBrowser|YaSearchBrowser/i.test(navigator.userAgent)
-}
-
-function isYandexAuthenticated() {
-	return storageGet(YANDEX_AUTH_KEY) === '1'
-}
-
-function saveYandexAuth() {
-	storageSet(YANDEX_AUTH_KEY, '1')
-	storageRemove(YANDEX_PENDING_KEY)
-}
-
-function clearYandexAuth() {
-	storageRemove(YANDEX_AUTH_KEY)
-	storageRemove(YANDEX_PENDING_KEY)
-	storageRemove('yandexAccessToken')
-}
-
-function getYandexAuthUrl() {
-	const returnUrl = encodeURIComponent(getReturnUrl())
-
-	if (YANDEX_CLIENT_ID) {
-		const redirectUri = encodeURIComponent(getReturnUrl())
-		return `https://oauth.yandex.ru/authorize?response_type=token&client_id=${YANDEX_CLIENT_ID}&redirect_uri=${redirectUri}`
-	}
-
-	return `https://passport.yandex.ru/auth?retpath=${returnUrl}`
-}
-
-function enableFormFields() {
-	reviewInput.disabled = false
-	submitBtn.disabled = false
-	yandexAuthBtn.setAttribute('aria-disabled', 'true')
-	yandexAuthBtn.removeAttribute('href')
-	yandexAuthBtn.querySelector('span').textContent = 'Яндекс ID подключён'
-	yandexLogoutBtn.hidden = false
-	authHint.textContent = 'Вы авторизованы — можно заполнить форму и отправить заявку'
-	authHint.classList.add('is-success')
-}
-
-function disableFormFields() {
-	reviewInput.disabled = true
-	submitBtn.disabled = true
-	yandexAuthBtn.href = getYandexAuthUrl()
-	yandexAuthBtn.removeAttribute('aria-disabled')
-	yandexAuthBtn.querySelector('span').textContent = 'Войти с Яндекс ID'
-	yandexLogoutBtn.hidden = true
-	authHint.textContent = 'Сначала войдите через Яндекс ID, чтобы разблокировать поля'
-	authHint.classList.remove('is-success')
-}
-
-function parseYandexTokenFromHash() {
-	const match = window.location.hash.match(/access_token=([^&]+)/)
-	return match ? match[1] : null
-}
-
-function handleYandexAuthReturn() {
-	const token = parseYandexTokenFromHash()
-
-	if (token) {
-		storageSet('yandexAccessToken', token)
-		saveYandexAuth()
-		try {
-			history.replaceState(null, '', getReturnUrl())
-		} catch (error) {}
-		return true
-	}
-
-	if (storageGet(YANDEX_PENDING_KEY) === '1') {
-		saveYandexAuth()
-		try {
-			history.replaceState(null, '', getReturnUrl())
-		} catch (error) {}
-		return true
-	}
-
-	return false
-}
-
-handleYandexAuthReturn()
-
-if (isYandexAuthenticated()) {
-	enableFormFields()
-} else {
-	disableFormFields()
-}
-
+//Если библиотеки GSAP и ScrollTrigger загружены, настраиваем анимации прокрутки
 if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-gsap.to('.hero, .main-title, .brand-slot', {
-	opacity: 0,
-	ease: 'none',
-	scrollTrigger: {
-		trigger: '.hero-section',
-		start: 'top top',
-		end: 'bottom top',
-		scrub: 1.8
-	}
-})
 
-if (ScrollTrigger.isTouch !== 1 && !isYandexBrowser() && typeof ScrollSmoother !== 'undefined') {
+	//Если устройство не сенсорное, то запускаем анимации прокрутки
+	if (ScrollTrigger.isTouch !== 1) {
 
-	ScrollSmoother.create({
-		wrapper: '.wrapper',
-		content: '.content',
-		smooth: 1.05,
-		effects: true
-	})
-
-}
-
-if (ScrollTrigger.isTouch !== 1) {
-
-	let itemsL = gsap.utils.toArray('.gallery__left .gallery__item')
-
-	itemsL.forEach(item => {
-		gsap.fromTo(item, { opacity: 0, x: -50 }, {
-			opacity: 1, x: 0,
-			scrollTrigger: {
-				trigger: item,
-				start: '-850',
-				end: '-100',
-				scrub: true
-			}
-		})
-	})
-
-	let itemsR = gsap.utils.toArray('.gallery__right .gallery__item')
-
-	itemsR.forEach(item => {
-		gsap.fromTo(item, { opacity: 0, x: 50 }, {
-			opacity: 1, x: 0,
-			scrollTrigger: {
-				trigger: item,
-				start: '-750',
-				end: 'top',
-				scrub: true
-			}
-		})
-	})
-
-	gsap.fromTo('.request-form', { opacity: 0, y: 40 }, {
-		opacity: 1,
-		y: 0,
-		scrollTrigger: {
-			trigger: '.request-form',
-			start: 'top 85%',
-			end: 'top 55%',
-			scrub: true
+		//Не создаём плавную прокрутку в Яндекс Браузере и если плагин не подключён
+		if (!isYandexBrowser() && typeof ScrollSmoother !== 'undefined') {
+			ScrollSmoother.create({
+				wrapper: '.wrapper',
+				content: '.content',
+				smooth: 1.5,
+				effects: true
+			})
 		}
-	})
 
-	ScrollTrigger.refresh()
-	window.addEventListener('load', () => ScrollTrigger.refresh())
+		gsap.to('.hero, .main-title, .brand-slot', {
+			opacity: 0,
+			ease: 'none',
+			scrollTrigger: {
+				trigger: '.hero-section',
+				start: 'top top',
+				end: 'bottom top',
+				scrub: 1.8
+			}
+		})
+
+		let itemsL = gsap.utils.toArray('.gallery__left .gallery__item')
+
+		itemsL.forEach(item => {
+			gsap.fromTo(item, { opacity: 0, x: -50 }, {
+				opacity: 1, x: 0,
+				scrollTrigger: {
+					trigger: item,
+					start: '-850',
+					end: '-100',
+					scrub: true
+				}
+			})
+		})
+
+		let itemsR = gsap.utils.toArray('.gallery__right .gallery__item')
+
+		itemsR.forEach(item => {
+			gsap.fromTo(item, { opacity: 0, x: 50 }, {
+				opacity: 1, x: 0,
+				scrollTrigger: {
+					trigger: item,
+					start: '-750',
+					end: 'top',
+					scrub: true
+				}
+			})
+		})
+
+		gsap.fromTo('.request-form', { opacity: 0, y: 40 }, {
+			opacity: 1,
+			y: 0,
+			scrollTrigger: {
+				trigger: '.request-form',
+				start: 'top 85%',
+				end: 'top 55%',
+				scrub: true
+			}
+		})
+
+		initHorizontalPhotoStrip()
+
+		ScrollTrigger.refresh()
+
+		window.addEventListener('load', () => ScrollTrigger.refresh())
+
+	}
 
 }
 
-	initHorizontalPhotoStrip()
-	ScrollTrigger.refresh()
-	window.addEventListener('load', () => ScrollTrigger.refresh())
-}
-
-function logoutYandex() {
-	clearYandexAuth()
-	reviewInput.value = ''
-	reviewInput.classList.remove('is-invalid', 'is-valid')
-	reviewError.hidden = true
-	clearFormStatus()
-	disableFormFields()
-}
-
+//Проверяет текст отзыва и возвращает текст ошибки, если он есть
 function validateReview(value) {
 	const trimmed = value.trim()
 
+	//Если поле пустое, то показываем просьбу написать отзыв
 	if (!trimmed) {
 		return 'Напишите отзыв'
 	}
 
+	//Если текст слишком короткий, то показываем ошибку про минимальную длину
 	if (trimmed.length < 10) {
 		return 'Отзыв должен содержать не менее 10 символов'
 	}
@@ -290,12 +179,14 @@ function validateReview(value) {
 	return ''
 }
 
+//Помечает поле как валидное или невалидное и показывает или скрывает текст ошибки
 function setFieldState(input, errorEl, message) {
 	const isValid = !message
 
 	input.classList.toggle('is-invalid', !isValid)
 	input.classList.toggle('is-valid', isValid && input.value.trim() !== '')
 
+	//Если сообщение об ошибке есть, то показываем его, иначе скрываем блок с ошибкой
 	if (message) {
 		errorEl.hidden = false
 		errorEl.textContent = message
@@ -307,33 +198,92 @@ function setFieldState(input, errorEl, message) {
 	return isValid
 }
 
+//Скрывает и очищает блок со статусом отправки формы
 function clearFormStatus() {
 	formStatus.hidden = true
 	formStatus.textContent = ''
 	formStatus.classList.remove('is-success', 'is-error')
 }
 
-yandexAuthBtn.addEventListener('click', () => {
-	if (!isYandexAuthenticated()) {
-		storageSet(YANDEX_PENDING_KEY, '1')
-	}
-})
-
-yandexLogoutBtn.addEventListener('click', () => {
-	logoutYandex()
-})
-
+//Если пользователь печатает в поле отзыва, то сбрасываем статус формы и пометки об ошибках
 reviewInput.addEventListener('input', () => {
 	clearFormStatus()
 	reviewInput.classList.remove('is-invalid', 'is-valid')
 	reviewError.hidden = true
 })
 
-form.addEventListener('submit', (event) => {
+//ЯНДЕКС
+
+//Спрашивает у сервера, а не у sessionStorage, вошёл ли пользователь по настоящему
+async function checkAuthStatus() {
+	try {
+		const response = await fetch('/me', { credentials: 'include' })
+		const data = await response.json()
+		return data.loggedIn
+	} catch (error) {
+		console.error('Не удалось проверить статус входа:', error)
+		return false
+	}
+}
+
+//Разблокирует поля формы, если пользователь вошёл через Яндекс ID
+function enableFormFields() {
+	reviewInput.disabled = false
+	submitBtn.disabled = false
+	yandexAuthBtn.setAttribute('aria-disabled', 'true')
+	yandexAuthBtn.removeAttribute('href')
+	yandexAuthBtn.querySelector('span').textContent = 'Яндекс ID подключён'
+	yandexLogoutBtn.hidden = false
+	authHint.textContent = 'Вы авторизованы, можно заполнить форму и отправить заявку'
+	authHint.classList.add('is-success')
+}
+
+//Блокирует поля формы, если пользователь ещё не вошёл через Яндекс ID
+function disableFormFields() {
+	reviewInput.disabled = true
+	submitBtn.disabled = true
+	//Кнопка ведёт на реальный маршрут бэкенда, а не на самодельную ссылку
+	yandexAuthBtn.href = '/auth/login'
+	yandexAuthBtn.removeAttribute('aria-disabled')
+	yandexAuthBtn.querySelector('span').textContent = 'Войти с Яндекс ID'
+	yandexLogoutBtn.hidden = true
+	authHint.textContent = 'Сначала войдите через Яндекс ID, чтобы разблокировать поля'
+	authHint.classList.remove('is-success')
+}
+
+//Проверяет реальный статус входа при загрузке страницы и настраивает форму
+async function initAuthState() {
+	const loggedIn = await checkAuthStatus()
+	//Если пользователь вошёл, то разблокируем форму, иначе оставляем её заблокированной
+	if (loggedIn) {
+		enableFormFields()
+	} else {
+		disableFormFields()
+	}
+}
+
+initAuthState()
+
+//Перенаправляет на реальный маршрут бэкенда, чтобы выйти из аккаунта, а не просто очищает sessionStorage
+function logoutYandex() {
+	window.location.href = '/auth/logout'
+}
+
+//Если пользователь нажал на кнопку выхода, то выходим из аккаунта
+yandexLogoutBtn.addEventListener('click', () => {
+	logoutYandex()
+})
+
+//Если пользователь отправляет форму, то сначала проверяем вход, потом само поле, и только потом отправляем данные на сервер
+form.addEventListener('submit', async (event) => {
 	event.preventDefault()
 	clearFormStatus()
 
-	if (!isYandexAuthenticated()) {
+	//Проверяем реальный статус входа перед отправкой
+	const loggedIn = await checkAuthStatus()
+
+	//Если пользователь не вошёл, то отправлять форму нельзя
+	if (!loggedIn) {
 		formStatus.hidden = false
 		formStatus.classList.add('is-error')
 		formStatus.textContent = 'Сначала войдите через Яндекс ID'
@@ -344,6 +294,7 @@ form.addEventListener('submit', (event) => {
 	const reviewMessage = validateReview(reviewInput.value)
 	const reviewOk = setFieldState(reviewInput, reviewError, reviewMessage)
 
+	//Если поле заполнено неправильно, то показываем ошибку и не отправляем форму
 	if (!reviewOk) {
 		formStatus.hidden = false
 		formStatus.classList.add('is-error')
@@ -353,10 +304,37 @@ form.addEventListener('submit', (event) => {
 		return
 	}
 
-	reviewInput.classList.add('is-valid')
-	formStatus.hidden = false
-	formStatus.classList.add('is-success')
-	formStatus.textContent = 'Форма успешно отправлена'
-	alert('Форма успешно отправлена')
+	try {
+		//Отправляем данные заявки на сервер
+		const response = await fetch('/requests', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ interests: reviewInput.value.trim() })
+		})
+
+		//Если сервер принял заявку, то показываем успех, иначе показываем ошибку
+		if (response.ok) {
+			formStatus.hidden = false
+			formStatus.classList.add('is-success')
+			formStatus.textContent = 'Форма успешно отправлена'
+			alert('Форма успешно отправлена')
+
+			form.reset()
+			reviewInput.classList.remove('is-valid', 'is-invalid')
+			reviewError.hidden = true
+		} else {
+			formStatus.hidden = false
+			formStatus.classList.add('is-error')
+			formStatus.textContent = 'Не удалось отправить форму'
+			alert('Не удалось отправить форму')
+		}
+	} catch (error) {
+		console.error('Ошибка при отправке:', error)
+		formStatus.hidden = false
+		formStatus.classList.add('is-error')
+		formStatus.textContent = 'Ошибка соединения с сервером'
+	}
+
 	refreshScrollTrigger()
 })
